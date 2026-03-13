@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-
+#comment
 def test_agent_returns_valid_json():
     """Test that agent.py outputs valid JSON with required fields.
 
@@ -16,7 +16,7 @@ def test_agent_returns_valid_json():
     - The 'tool_calls' field exists and is an array
     """
     # Path to agent.py (project root is 2 levels up from backend/tests/unit)
-    project_root = Path(__file__).parent.parent.parent.parent
+    project_root = Path(__file__).parent
     agent_path = project_root / "agent.py"
 
     # Run agent.py with a simple question

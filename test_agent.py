@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-
+#comment
 def test_agent_returns_valid_json():
     """Test that agent.py outputs valid JSON with required fields.
 

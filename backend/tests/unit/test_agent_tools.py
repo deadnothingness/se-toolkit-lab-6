@@ -113,3 +113,106 @@ def test_wiki_files_uses_list_files():
     assert "list_files" in tool_names, (
         f"Expected 'list_files' in tool_calls, got: {tool_names}"
     )
+
+
+def test_items_count_uses_query_api():
+    """Test that agent uses query_api tool to answer database count question.
+
+    This test runs agent.py with a question about items in the database,
+    verifies that:
+    - The output is valid JSON
+    - The 'query_api' tool is used in tool_calls
+    - The answer contains a number
+    """
+    # Path to agent.py
+    project_root = Path(__file__).parent.parent.parent.parent
+    agent_path = project_root / "agent.py"
+
+    # Run agent.py with items count question
+    result = subprocess.run(
+        [sys.executable, str(agent_path), "How many items are in the database?"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+
+    # Check exit code
+    assert result.returncode == 0, f"Agent exited with code {result.returncode}: {result.stderr}"
+
+    # Parse JSON
+    try:
+        data = json.loads(result.stdout.strip())
+    except json.JSONDecodeError as e:
+        raise AssertionError(f"Agent output is not valid JSON: {result.stdout[:200]}") from e
+
+    # Check required fields
+    assert "answer" in data, "Missing 'answer' field in output"
+    assert data["answer"], "'answer' field is empty"
+
+    assert "tool_calls" in data, "Missing 'tool_calls' field in output"
+    assert isinstance(data["tool_calls"], list), "'tool_calls' field is not an array"
+
+    # Check that query_api was used
+    tool_names = [call["tool"] for call in data["tool_calls"]]
+    assert "query_api" in tool_names, (
+        f"Expected 'query_api' in tool_calls, got: {tool_names}"
+    )
+
+    # Verify answer contains a number
+    import re
+    numbers = re.findall(r"\d+", data["answer"])
+    assert len(numbers) > 0, f"Expected answer to contain a number, got: {data['answer']}"
+
+
+def test_status_code_uses_query_api():
+    """Test that agent uses query_api tool to answer status code question.
+
+    This test runs agent.py with a question about HTTP status codes,
+    verifies that:
+    - The output is valid JSON
+    - The 'query_api' tool is used in tool_calls
+    - The answer contains 401 or 403
+    """
+    # Path to agent.py
+    project_root = Path(__file__).parent.parent.parent.parent
+    agent_path = project_root / "agent.py"
+
+    # Run agent.py with status code question
+    result = subprocess.run(
+        [
+            sys.executable, str(agent_path),
+            "What HTTP status code does the API return when you request /items/ without authentication?"
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+
+    # Check exit code
+    assert result.returncode == 0, f"Agent exited with code {result.returncode}: {result.stderr}"
+
+    # Parse JSON
+    try:
+        data = json.loads(result.stdout.strip())
+    except json.JSONDecodeError as e:
+        raise AssertionError(f"Agent output is not valid JSON: {result.stdout[:200]}") from e
+
+    # Check required fields
+    assert "answer" in data, "Missing 'answer' field in output"
+    assert data["answer"], "'answer' field is empty"
+
+    assert "tool_calls" in data, "Missing 'tool_calls' field in output"
+    assert isinstance(data["tool_calls"], list), "'tool_calls' field is not an array"
+
+    # Check that query_api was used
+    tool_names = [call["tool"] for call in data["tool_calls"]]
+    assert "query_api" in tool_names, (
+        f"Expected 'query_api' in tool_calls, got: {tool_names}"
+    )
+
+    # Verify answer contains 401 or 403
+    import re
+    status_codes = re.findall(r"40[13]", data["answer"])
+    assert len(status_codes) > 0, (
+        f"Expected answer to contain 401 or 403, got: {data['answer']}"
+    )
